@@ -1,3 +1,8 @@
+Set wd: cd "N:/Desktop/ECON322"
+
+Start file: 
+capture log close 
+log using tutorial3.log, replace
 * create a txt file, save it as a .do file, and click on do-file editor button in Stata and save it as a do file
 
 Import data: insheet using 2006census.csv
@@ -64,5 +69,7 @@ tabstat agegrp if agegrp<88 & aboid==6, stat(mean)
 replace wage=. if wage>= 8888888
 drop if wage==.
 save base.dta, replace
+********Data analysis: look at correlation between 2 variables********
 corr wage aboid
 log close
+
