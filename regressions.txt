@@ -1,0 +1,81 @@
+*******************************************************************************************************************
+*****Data preparation: Rename, Create new variables, Label NA, Replace values, Subset and drop variable****
+*******************************************************************************************************************
+Rename variables: rename escage26 age
+
+Create new variables: gen wagelk=wage/1000
+
+Describe variables: 
+sum * look at summaries
+describe nonsense * describe a variable
+
+Label missing data:
+******save non-missing data, and create a string variable for missing data*****
+keep if marst<90 & immst<6 & prov<90 & hhsize<8 & yrschl<90
+save base11.dta, replace
+gen str1 nonsense="2"   * nonsense if the variable name
+
+Replace variable values:
+destring nonsense, replace
+replace sex=0 if sex==2
+
+Keep subset for regression, or drop unwanted variables:
+keep ecage26 sex marst immst disabs prov hhsize wgsal yrschl
+capture drop nbjobs
+
+Create dummies:
+foreach var in ontario marcl prevmar single{     * use for loop to create new variables with 0
+	gen byte `var'=0
+	}
+replace ontario=1 if prov==35     * change value to 1 according to conditions
+replace marcl=1 if inlist(marst, 1, 2)
+replace prevmar=1 if inlist(marst, 3, 5)
+replace single=1 if marst==6
+
+
+Set up indicators:
+gen byte female=1-sex   * if sex = 1, data entry falls into female category
+
+Set up labels:  * map values to each category
+tab marst
+label define labelmarst 1"Married" 2"CLaw" 3"Separated" 4"Divorced" 5"Widowed" 6"Single"
+label values marst labelmarst
+tab marst
+
+
+****************
+**Regression**
+****************
+
+reg wages uphwrk
+estimate store model1
+
+reg wages uphwrk, no cons   * regression goes through the origin
+estimate store model2
+
+reg wgsal disabs age c.age#c.age   * with polynomials; with continuous variables
+estimate store model3
+esttab m2 m3, se scalar(rmse F df_m df_r r2)
+
+reg wgsal female i.marst    * regress with categorical variable, such as indicator variable sex
+reg wgsal female ib6.marst  * choose the 6th category as a baseline 
+reg wgsal i.female ib6.marst ib6.marst#i.female   * interactions: *notice how the effect of marital status differs for female vs non-female (marrieds earn more unless female→ earn less)
+
+******************
+**Result display**
+******************
+*Tables:
+findit esttab
+esttab model1 model2, se scalar(rmse F df_m df_r r2)
+
+*Scatterplot with regression line
+graph twoway (scatter logw yrschl) (lfit logw yrschl, title("Log(Wage & Salary) by years of
+schooling") xtitle("Years of Schooling") ytitle("Log(Wage & Salary)") ylabel(3(1)13))
+
+*Scatterplot with labelled categories
+Stata: twoway scatter wgsal marst, xlab(1"Married" 2"CLaw" 3"Separated" 4"Divorced" 5"Widowed"
+6"Single", angle(90)) xtitle(Marital Status) ytitle(Wages & Salaries) title(Relationship between
+Wages/Salaries and Marital Status)
+
+*save our base data sets
+save base11.dta, replace
