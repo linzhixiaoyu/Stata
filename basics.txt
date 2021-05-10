@@ -1,3 +1,6 @@
+************************************************************************
+********set wd, start file, access libraries, helps, end session**********
+************************************************************************
 Set wd: cd "N:/Desktop/ECON322"
 
 Start file: 
@@ -5,12 +8,7 @@ capture log close
 log using tutorial3.log, replace
 * create a txt file, save it as a .do file, and click on do-file editor button in Stata and save it as a do file
 
-Import data: insheet using 2006census.csv
-
-Save, clear, and reload the data file:
-save "slid433.dta", replace
-clear
-use "slid322.dta"
+End session: log close
 
 Install new commands and access libraries:
 ssc install ivreg2
@@ -18,8 +16,35 @@ findit condiv
 
 Help: help tabstat
 
-End session: log close
+************************************************************************
+********import data, save file, subsample, replace and drop**********
+************************************************************************
+Import data: insheet using 2006census.csv
 
+Save, clear, and reload the data file:
+save "slid433.dta", replace
+clear
+use "slid322.dta"
+
+Subsample with restrictions:
+preserve * allow going back to original data
+keep if agrgrp>8 & agrgrp<88 & inrange(wages, 1, 400000)
+save baseline, replace
+* go back to use the original data:
+restore
+use baseline, clear
+
+Keep subset of variables:
+keep ......
+
+Replace values and drop missing values, and save subsamples:
+replace wage=. if wage>=8888888
+drop if wage==.
+save base.dta, replace
+
+*******************************************************************************************
+***Descriptive summaries, Histograms, Scatterplots, Conditional tables, Correlations***
+*******************************************************************************************
 Descriptive:
 count
 sum * for the whole dataset, include mean, sd, max, min
@@ -40,10 +65,14 @@ histogram agegrp if aboid==6 & agegrp<88
 
 Save graphs: graph export figure1stata.pdf, replace
 
-Replace values and drop missing values, and save subsamples:
-replace wage=. if wage>=8888888
-drop if wage==.
-save base.dta, replace
+Conditional tables: tab agrgrp if aboid==6
+
+Cross tabs: tab agegrp, aboid
+
+Scatter plot: 
+twoway scatter wage aboid, title("") xtitle("") ytitle("")
+* with regression lines:
+graph twoway (scatter wage aboid) (lfit logw yrschl, title("") xtitle("") ytitle("") ylabel(3(1)13)
 
 Correlation: corr wage aboid
 
