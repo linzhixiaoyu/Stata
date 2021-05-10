@@ -18,6 +18,7 @@ gen str1 nonsense="2"   * nonsense if the variable name
 Replace variable values:
 destring nonsense, replace
 replace sex=0 if sex==2
+replace married=1 if (marst==1|marst==2)
 
 Keep subset for regression, or drop unwanted variables:
 keep ecage26 sex marst immst disabs prov hhsize wgsal yrschl
@@ -43,9 +44,9 @@ label values marst labelmarst
 tab marst
 
 
-****************
-**Regression**
-****************
+***************************************
+**Regression, Test joint hypothesis**
+***************************************
 
 reg wages uphwrk
 estimate store model1
@@ -61,12 +62,29 @@ reg wgsal female i.marst    * regress with categorical variable, such as indicat
 reg wgsal female ib6.marst  * choose the 6th category as a baseline 
 reg wgsal i.female ib6.marst ib6.marst#i.female   * interactions: *notice how the effect of marital status differs for female vs non-female (marrieds earn more unless female→ earn less)
 
+reg wgsal age c.age#c.age, robust   * with robust se
+
+Testing joint hypothesis
+Stata: reg wgsal female age c.age#c.age ib1.marst
+testparm i.marst
+
 ******************
 **Result display**
 ******************
 *Tables:
 findit esttab
 esttab model1 model2, se scalar(rmse F df_m df_r r2)
+
+*Advanced 3 tables:
+label var wgsal "Wages and Salaries"
+label var yrschl "Years of Schooling"
+label var married "Married"
+label var female "Female"
+label var age "Age"
+esttab m1 m2 m3 using table2.html, replace b(%4.3f) se(%4.3f) r2(%4.2f) ar2(%4.2f) scalar(rmse F df_m df_r)
+sfmt(%4.3f %4.3f %9.0f %9.0f) title(My Regression Results) nodepvars nomtitles addnotes( "The dependent variable
+in each case is Wages & Salaries." "Estimates based on the 2006 Canadian Census." "Observations with missing values
+are dropped." "Robust standard errors" ) notes label interaction(" x ")
 
 *Scatterplot with regression line
 graph twoway (scatter logw yrschl) (lfit logw yrschl, title("Log(Wage & Salary) by years of
@@ -77,5 +95,42 @@ Stata: twoway scatter wgsal marst, xlab(1"Married" 2"CLaw" 3"Separated" 4"Divorc
 6"Single", angle(90)) xtitle(Marital Status) ytitle(Wages & Salaries) title(Relationship between
 Wages/Salaries and Marital Status)
 
+* Combine graphs
+graph combine unmarried.gph married.gph
+
 *save our base data sets
 save base11.dta, replace
+
+***************************
+**Predictions with plots**
+***************************
+* in-sample:
+predict yhat
+sum yhat
+
+* by groups:
+reg wgsal female age c.age#c.age ib6.marst i.female#ib6.marst
+margins female#marst
+
+*Plot predicted outcomes with Confidence Intervals
+reg wgsal age c.age#c.age married yrschl
+quietly margins, at(yrschl=(0(5)20) mar==0.4855 age==41.43)  * quiet: do not show outputs
+marginsplot, recast(line) ciopt(color(blue)) recastci(rline) title("Predicted Values of Wage & Salary by
+years of schooling") xtitle("Years of Schooling") ytitle("Wage & Salary")
+marginsplot, recast(line) ciopt(color(yellow)) recastci(rarea) title("Predicted Values of Wage & Salary
+by years of schooling") xtitle("Years of Schooling") ytitle("Wage & Salary")
+
+* Plot by group
+reg wgsal age c.age#c.age i.married yrschl i.married#c.yrschl
+quietly margins, at(yrschl=(0(5)20) married==0 age==41.43)
+marginsplot , recast(line) ciopt(color(blue)) recastci(rline) title("Predicted lnWage by Years Schooling
+(Unmarried)") xtitle("Years of Schooling") ytitle("Wages & Salary") ylabel(10000(10000)60000)
+saving(unmarried, replace)
+
+******************
+*Residuals tesing*
+******************
+* Saving Residuals for testing (put in next tutorial...)
+Stata: quietly reg wgsal female age c.age#c.age ib6.marst i.female#ib6.marst
+predict myresid, residuals
+sum myresid
