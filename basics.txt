@@ -1,0 +1,68 @@
+* create a txt file, save it as a .do file, and click on do-file editor button in Stata and save it as a do file
+
+Import data: insheet using 2006census.csv
+
+Save, clear, and reload the data file:
+save "slid433.dta", replace
+clear
+use "slid322.dta"
+
+Install new commands and access libraries:
+ssc install ivreg2
+findit condiv
+
+Help: help tabstat
+
+End session: log close
+
+Descriptive:
+count
+sum * for the whole dataset, include mean, sd, max, min
+sum yrschll8, detail  * include median, kurtosis, etc
+tab yrschl * tabular frequencies
+tabstat yrschl, stat(mean, skewness, kurtosis) * same to "summary"
+--Add filters:
+tabstat wages if wages<888888, stat(mean)
+tabstat wages if wages>0 & wages<888888, stat(mean)
+tabstat agegrp if aboid<6 & agegrp<88, stat(mean)
+tabstat agegrp if aboid==6 & agegrp<88, stat(mean)
+
+Histogram: 
+histogram wages if wages<999999, percent bin(50) title("") xtitle("") ytitle("")
+-- Add filters:
+histogram agegrp if aboid<6 & agegrp<88
+histogram agegrp if aboid==6 & agegrp<88
+
+Save graphs: graph export figure1stata.pdf, replace
+
+Replace values and drop missing values, and save subsamples:
+replace wage=. if wage>=8888888
+drop if wage==.
+save base.dta, replace
+
+Correlation: corr wage aboid
+
+***************
+**Stata Code**
+***************
+cd “my directory”
+log using tutorial3.log  * create a txt file and change to .do file first
+insheet using 2006census.csv  * import data
+******Descriptive summary with tabstat and histogram, filters added*******
+tab wages
+tabstat wages, stat(mean)
+tabstat wages if wages<8888888, stat(mean)
+tabstat wages if wages>0 & wages<8888888, stat(mean)
+histogram wages if wages<8888888, bin(50) title("Histogram of Wages in the 2006 Census") xtitle("Annual Wage &
+Salary Income") ytitle("Percent of Population with this Income")
+graph export figure1stata.pdf, replace
+histogram agegrp if aboid<6 & agegrp<88
+histogram agegrp if aboid==6 & agegrp<88
+tabstat agegrp if agegrp<88 & aboid<6, stat(mean)
+tabstat agegrp if agegrp<88 & aboid==6, stat(mean)
+********Data preparation: replace and drop missing data********
+replace wage=. if wage>= 8888888
+drop if wage==.
+save base.dta, replace
+corr wage aboid
+log close
