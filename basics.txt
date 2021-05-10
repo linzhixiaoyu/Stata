@@ -76,6 +76,13 @@ graph twoway (scatter wage aboid) (lfit logw yrschl, title("") xtitle("") ytitle
 
 Correlation: corr wage aboid
 
+Pretty tables: 
+quietly estpost sum wage age mar educ
+esttab using table1.html, replace cell(mean(fmt(%9.2f %9.2f %9.2f %9.2f)) sd(fmt(%9.3f %9.2f
+%9.2f %9.2f) par )) note(Author’s calculations using 2006 Canadian Census. Obs with missing
+values dropped . Means presented with standard deviations in parentheses below.) title("Table 1:
+sample statistics") collabel ("mean / (sd)") nonumber mlabel("base sample") label
+
 ***************
 **Stata Code**
 ***************
